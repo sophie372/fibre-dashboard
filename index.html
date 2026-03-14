@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fibre — SEO Report Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1e2d4a;--navy-mid:#263a5e;--navy-light:#3a5070;
+  --teal:#3ecfa3;--teal-dark:#2aaa83;
+  --off:#f6f8fb;--border:#e3e8f0;
+  --text:#1e2d4a;--muted:#6b7a94;
+  --up:#1db87a;--dn:#e84646;--up-bg:#eafaf3;--dn-bg:#fef0f0;
+  --shadow:0 2px 14px rgba(30,45,74,.07);
+}
+body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--off);color:var(--text);min-height:100vh}
+.hdr{background:var(--navy);height:62px;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.hdr-logo svg{height:26px;width:auto}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.hdr-badge{background:rgba(255,255,255,.13);color:rgba(255,255,255,.82);font-size:12px;font-weight:500;padding:4px 12px;border-radius:20px}
+.hdr-cta{background:var(--teal);color:var(--navy);font-size:13px;font-weight:700;padding:8px 18px;border-radius:8px;text-decoration:none}
+.hero{background:linear-gradient(140deg,var(--navy) 0%,var(--navy-mid) 55%,var(--navy-light) 100%);padding:3rem 2rem 3.5rem;color:white;position:relative}
+.hero::after{content:"";position:absolute;bottom:-1px;left:0;right:0;height:50px;background:var(--off);clip-path:ellipse(56% 100% at 50% 100%)}
+.hero-inner{max-width:1200px;margin:0 auto}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:10px}
+.hero h1{font-size:clamp(20px,3vw,30px);font-weight:700;line-height:1.2;margin-bottom:6px}
+.hero-sub{font-size:14px;color:rgba(255,255,255,.6);line-height:1.6}
+.hero-tabs{display:flex;gap:6px;margin-top:1.5rem;flex-wrap:wrap}
+.tab{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
+.tab:hover{background:rgba(255,255,255,.18);color:white}
+.tab.active{background:var(--teal);color:var(--navy);border-color:var(--teal);font-weight:700}
+.tab.hidden{display:none}
+.main{max-width:1200px;margin:0 auto;padding:1.5rem 2rem}
+.sec{display:none}
+.sec.active{display:block}
+.client-screen{padding:2rem 0}
+.cs-title{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.cs-sub{font-size:13px;color:var(--muted);margin-bottom:1.5rem}
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:2rem}
+.client-card{background:white;border:1px solid var(--border);border-radius:14px;padding:1.25rem;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
+.client-card:hover{border-color:var(--teal);transform:translateY(-2px);box-shadow:0 6px 20px rgba(30,45,74,.12)}
+.client-card.active-client{border-color:var(--teal);background:#f0fdf9}
+.cc-name{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.cc-package{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:8px}
+.pkg-seo{background:#e3f0fd;color:#185fa5}
+.pkg-aio{background:#e1f5ee;color:#0f6e56}
+.pkg-both{background:#f3e8fe;color:#6b21a8}
+.cc-features{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.cc-feat{font-size:10px;background:var(--off);color:var(--muted);padding:2px 6px;border-radius:6px;border:1px solid var(--border)}
+.add-client-btn{background:white;border:2px dashed var(--border);border-radius:14px;padding:1.25rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted);font-family:inherit;width:100%}
+.add-client-btn:hover{border-color:var(--teal);color:var(--teal);background:#f0fdf9}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.show{display:flex}
+.modal{background:white;border-radius:16px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:white;z-index:1}
+.modal-hdr h2{font-size:16px;font-weight:700;color:var(--navy)}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1;padding:4px}
+.modal-body{padding:1.5rem}
+.form-section{margin-bottom:1.25rem}
+.form-section h3{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-field{margin-bottom:10px}
+.form-field label{display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+.form-field input,.form-field select,.form-field textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:var(--off)}
+.form-field input:focus,.form-field select:focus{outline:none;border-color:var(--teal)}
+.form-field .hint{font-size:11px;color:var(--muted);margin-top:3px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:13px;color:var(--text)}
+.toggle-label small{display:block;font-size:11px;color:var(--muted);margin-top:1px}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--border);border-radius:20px;transition:background .2s}
+.toggle input:checked+.toggle-track{background:var(--teal)}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;background:white;border-radius:50%;transition:transform .2s}
+.toggle input:checked~.toggle-thumb{transform:translateX(16px)}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:white}
+.btn-primary{background:var(--teal);color:var(--navy);border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer}
+.btn-secondary{background:var(--off);color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;font-family:inherit;cursor:pointer}
+.btn-danger{background:#fef0f0;color:var(--dn);border:1px solid #fecaca;border-radius:8px;padding:10px 16px;font-size:13px;font-family:inherit;cursor:pointer}
+.callout{background:white;border-left:4px solid var(--teal);border-radius:0 12px 12px 0;padding:1.2rem 1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow)}
+.callout-lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--teal-dark);margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.ai-badge{background:var(--teal);color:var(--navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+.callout p{font-size:14px;line-height:1.8;color:var(--text);white-space:pre-wrap}
+.mcards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+@media(max-width:768px){.mcards{grid-template-columns:repeat(2,1fr)}}
+.mc{background:white;border-radius:12px;padding:1.1rem;box-shadow:var(--shadow);border:1px solid var(--border)}
+.mc-lbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.mc-val{font-size:26px;font-weight:700;color:var(--navy);line-height:1;margin-bottom:5px}
+.mc-d{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:2px 7px;border-radius:20px}
+.mc-d.up{background:var(--up-bg);color:var(--up)}
+.mc-d.dn{background:var(--dn-bg);color:var(--dn)}
+.mc-d.nt{background:#f0f2f6;color:var(--muted)}
+.card{background:white;border-radius:14px;padding:1.5rem;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:1.5rem}
+.card-ttl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.2rem;display:flex;align-items:center;gap:8px}
+.card-ttl::after{content:"";flex:1;height:1px;background:var(--border)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+@media(max-width:768px){.two-col{grid-template-columns:1fr}}
+.empty{height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:10px;color:var(--muted)}
+.empty span{font-size:24px;opacity:.35}
+.empty p{font-size:13px;font-weight:500}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:7px 10px;text-align:left;border-bottom:2px solid var(--border)}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--off)}
+.tbl .er td{text-align:center;padding:1.5rem;color:var(--muted);font-style:italic}
+.url{font-size:11px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.du{color:var(--up);font-weight:600;font-size:12px}
+.dd{color:var(--dn);font-weight:600;font-size:12px}
+.df{color:var(--muted);font-size:12px}
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:1rem}
+.comp-card{background:var(--off);border:1px solid var(--border);border-radius:10px;padding:.9rem}
+.comp-card.highlight{background:#f0fdf9;border-color:var(--teal)}
+.comp-name{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.comp-val{font-size:20px;font-weight:700;color:var(--navy)}
+.wins{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
+@media(max-width:768px){.wins{grid-template-columns:1fr 1fr}}
+.win{background:var(--off);border:1px solid var(--border);border-radius:10px;padding:.9rem;display:flex;flex-direction:column;gap:4px}
+.win-kw{font-size:12px;font-weight:600;color:var(--navy)}
+.win-move{display:flex;align-items:center;gap:5px}
+.win-old{font-size:12px;color:var(--muted);text-decoration:line-through}
+.win-arr{color:var(--teal);font-size:14px;font-weight:700}
+.win-new{font-size:18px;font-weight:700;color:var(--navy)}
+.win-badge{font-size:10px;font-weight:700;background:var(--up-bg);color:var(--up);padding:2px 6px;border-radius:10px;align-self:flex-start}
+.ai-sources{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.ais{background:white;border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;box-shadow:var(--shadow)}
+.ais-name{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.ais-n{font-size:28px;font-weight:700;color:var(--navy)}
+.region-tabs{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
+.rtab{background:white;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
+.rtab.active{background:var(--navy);color:white;border-color:var(--navy);font-weight:700}
+.region-panel{display:none}
+.region-panel.active{display:block}
+.setup-card{background:white;border-radius:16px;border:1px solid var(--border);padding:1.75rem;box-shadow:var(--shadow);margin-bottom:1.5rem}
+.setup-card h2{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.setup-card>p{font-size:13px;color:var(--muted);margin-bottom:1.5rem;line-height:1.6}
+.connect-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem}
+@media(max-width:600px){.connect-grid{grid-template-columns:1fr}}
+.conn-box{border:1px solid var(--border);border-radius:12px;padding:1.1rem;display:flex;flex-direction:column;gap:8px}
+.conn-box.connected{border-color:var(--teal);background:#f0fdf9}
+.conn-top{display:flex;align-items:center;gap:10px}
+.conn-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.conn-info h3{font-size:13px;font-weight:700;color:var(--navy)}
+.conn-info p{font-size:11px;color:var(--muted);margin-top:1px}
+.conn-status{font-size:11px;font-weight:600}
+.conn-status.ok{color:var(--up)}
+.conn-status.pending{color:var(--muted)}
+.connect-btn{border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s}
+.cb-google{background:#4285f4;color:white}
+.cb-google:hover{background:#2b6fdb}
+.cb-connected{background:var(--up-bg);color:var(--up);cursor:default}
+.cb-disconnect{background:var(--off);color:var(--muted);border:1px solid var(--border);font-size:11px;padding:4px 10px}
+.cb-teal{background:var(--teal);color:var(--navy)}
+.cb-teal:hover{background:var(--teal-dark)}
+.prop-wrap{display:none;flex-direction:column;gap:5px}
+.prop-wrap.show{display:flex}
+.prop-wrap label{font-size:11px;font-weight:600;color:var(--text)}
+.prop-wrap select{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:white}
+.api-input-wrap{display:flex;flex-direction:column;gap:5px}
+.api-input-wrap label{font-size:11px;color:var(--muted)}
+.api-input-row{display:flex;gap:6px}
+.api-input-row input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:monospace;color:var(--text)}
+.date-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
+.date-field label{display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+.date-field input[type=date]{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:white}
+.oauth-notice{background:#fff9e6;border:1px solid #f5c842;border-radius:10px;padding:.9rem 1rem;margin-bottom:1.25rem;font-size:12px;color:#7a5c00;line-height:1.6}
+.fetch-btn{width:100%;background:var(--navy);color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s}
+.fetch-btn:hover{background:var(--navy-mid)}
+.fetch-btn:disabled{opacity:.5;cursor:not-allowed}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden;display:none}
+.progress-fill{height:100%;background:var(--teal);border-radius:2px;width:0%;transition:width .4s ease}
+.progress-bar.show{display:block}
+.fetch-status{font-size:13px;color:var(--muted);text-align:center;margin-top:8px;min-height:20px}
+.dot-pulse{display:inline-flex;gap:4px;align-items:center}
+.dot-pulse span{width:5px;height:5px;border-radius:50%;background:var(--teal);animation:dp 1.2s ease-in-out infinite}
+.dot-pulse span:nth-child(2){animation-delay:.2s}
+.dot-pulse span:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+.meta-bar{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;gap:6px;align-items:center;background:white;border-radius:50px;padding:7px 16px 7px 10px;box-shadow:0 4px 20px rgba(30,45,74,.18);border:1px solid var(--border)}
+.meta-bar label{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
+.meta-bar input{border:none;font-size:13px;font-weight:600;color:var(--navy);background:transparent;outline:none;font-family:inherit;width:110px}
+.footer{background:var(--navy);text-align:center;padding:1.2rem;font-size:12px;color:rgba(255,255,255,.4);margin-top:3rem}
+.footer a{color:var(--teal);text-decoration:none}
+.rev{opacity:0;transform:translateY(12px);transition:opacity .35s ease,transform .35s ease}
+.rev.vis{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<header class="hdr"><a class="hdr-logo" href="https://fibre.marketing" target="_blank"><svg style="height:26px;width:auto;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 130.89 40.22"><defs><style>.cls-1{fill:#fff;}.cls-2{fill:url(#linear-gradient);}.cls-3{fill:url(#linear-gradient-2);}</style><linearGradient id="linear-gradient" x1="26.19" y1="29.78" x2="50.78" y2="29.78" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff"/><stop offset="0.19" stop-color="#fbfbfb"/><stop offset="0.39" stop-color="#eee"/><stop offset="0.59" stop-color="#d9d9d9"/><stop offset="0.8" stop-color="#bbb"/><stop offset="1" stop-color="#989898"/></linearGradient><linearGradient id="linear-gradient-2" y1="30.22" x2="18.84" y2="30.22" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff"/><stop offset="0.34" stop-color="#fdfdfd"/><stop offset="0.52" stop-color="#f5f5f5"/><stop offset="0.66" stop-color="#e7e7e7"/><stop offset="0.78" stop-color="#d4d4d4"/><stop offset="0.89" stop-color="#bcbcbc"/><stop offset="0.98" stop-color="#9e9e9e"/><stop offset="1" stop-color="#989898"/></linearGradient></defs><g id="Layer_2" data-name="Layer 2"><g id="Layer_1-2" data-name="Layer 1"><polygon class="cls-1" points="66.31 9.83 70.47 9.83 66.58 34.41 62.42 34.41 66.31 9.83"/><polygon class="cls-1" points="67.71 0 71.86 0 71.16 4.3 67 4.3 67.71 0"/><path class="cls-1" d="M95.1,17.55a29.88,29.88,0,0,1-.41,4.56c-1.54,9.61-5.28,12.64-13,12.64a17.85,17.85,0,0,1-8.92-2.06c.11-1.42.28-2.83.51-4.35l4.45-28h4.14l-1.57,10a26,26,0,0,1,6.13-.8C92.31,9.5,95.1,11.61,95.1,17.55ZM77.62,26.81c-.17,1.13-.35,2.51-.44,3.6a11.79,11.79,0,0,0,5,1c5.88,0,7.44-3.63,8.33-9.28A27.47,27.47,0,0,0,90.93,18c0-3.34-1.36-5.1-6.21-5.1a17.89,17.89,0,0,0-5,.84Z"/><path class="cls-1" d="M95.1,34.41,98,15.9c.23-1.52.52-2.92.85-4.35a21.89,21.89,0,0,1,9.57-2.05c.8,0,1.55,0,2.24.09l-.89,3.47a15.59,15.59,0,0,0-1.9-.1,14.21,14.21,0,0,0-5.32,1c-.26,1.09-.51,2.47-.69,3.61L99.23,34.41Z"/><path class="cls-1" d="M121.94,9.5c6.78,0,8.95,2.94,8.95,7.76a25.85,25.85,0,0,1-.33,3.74c-.11.65-.25,1.42-.4,2.09-2.83.49-8.64,1-12,1.19l-5.06.22c0,.51-.07,1-.07,1.42,0,3.86,1.74,5.37,6.25,5.37a66.48,66.48,0,0,0,8.67-.66l-.15,3.26a61.23,61.23,0,0,1-10.37.86c-6.36,0-8.45-3.41-8.45-8.49a27.19,27.19,0,0,1,.36-4.15C110.72,13.2,114,9.5,121.94,9.5Zm-2.8,11.72c2-.1,5.25-.36,7.26-.62.11-.42.22-1,.29-1.47a11.57,11.57,0,0,0,.15-1.79c0-2.89-1.47-4.54-5.39-4.54-5.57,0-7.14,3.21-8,8.68Z"/><path class="cls-1" d="M21.8,21.88l-4.58,6.45a6.21,6.21,0,0,1-4.6,2.88,4.24,4.24,0,0,1-2.81-.93l0,0a8.52,8.52,0,0,0,6.59,2.78,8.42,8.42,0,0,0,2.38-.45,12.23,12.23,0,0,0,1.74-2l4.57-6.45A7.77,7.77,0,0,1,26.3,23l-.07.05c1.1-1.46,5.34-5.7,8.52-2.53a8.13,8.13,0,0,0-5.61-2.7A8.77,8.77,0,0,0,21.8,21.88Z"/><path class="cls-2" d="M50,38a6.7,6.7,0,0,1-5.36-2.44,6.52,6.52,0,0,1-1.56-1.81l-7-11.4A11.39,11.39,0,0,0,34.7,20.5c-3.18-3.18-7.42,1.06-8.51,2.51,0,0,3.73-3.12,6.45,1.5l7,11.4c1.8,2.93,4.18,4.45,6.75,4.3a6.37,6.37,0,0,0,4.4-2.29A6.26,6.26,0,0,1,50,38Z"/><path class="cls-3" d="M16.45,33.11a8.52,8.52,0,0,1-6.59-2.78,6,6,0,0,1-.94-.89L5.49,25.13H.26L0,25.19l5.78,6.88a8.63,8.63,0,0,0,7,3.24,9.55,9.55,0,0,0,6.05-2.65A8.56,8.56,0,0,1,16.45,33.11Z"/><path class="cls-1" d="M61.67,0C56.84,0,54,2.61,53.29,7.32L52.9,9.83H50.19l-.52,3.23h2.71l-1.06,6.69L48.84,33.42c-.75,1.64-1.76,2.65-2.71,2.71a2.34,2.34,0,0,1-1.45-.55A6.7,6.7,0,0,0,50,38a6.09,6.09,0,0,0,.73-.1,11.14,11.14,0,0,0,1.79-2.8s3.9-21.18,3.87-21.53l.09-.53h4.76l.52-3.23H57l.43-2.65c.45-2.79,2.11-3.95,4.51-3.95h.89L63.38,0Z"/></g></g></svg></a>
+  <div class="hdr-right">
+    <span class="hdr-badge" id="hdr-client">Select a client</span>
+    <a href="mailto:team@fibre.marketing" class="hdr-cta">Get in touch</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow" id="hero-eyebrow">Monthly SEO Report</div>
+    <h1 id="hero-title">Fibre Report Dashboard</h1>
+    <p class="hero-sub" id="hero-sub">Select a client below to load their report configuration</p>
+    <div class="hero-tabs" id="hero-tabs">
+      <button class="tab active" onclick="showSec('clients',this)" id="tab-clients">&#128101; Clients</button>
+      <button class="tab hidden" onclick="showSec('setup',this)" id="tab-setup">&#9889; Fetch data</button>
+      <button class="tab hidden" onclick="showSec('overview',this)" id="tab-overview">Overview</button>
+      <button class="tab hidden" onclick="showSec('traffic',this)" id="tab-traffic">Traffic</button>
+      <button class="tab hidden" onclick="showSec('rankings',this)" id="tab-rankings">Rankings</button>
+      <button class="tab hidden" onclick="showSec('competitors',this)" id="tab-competitors">Competitors</button>
+      <button class="tab hidden" onclick="showSec('ai',this)" id="tab-ai">AI Visibility</button>
+      <button class="tab hidden" onclick="showSec('gbp',this)" id="tab-gbp">GBP</button>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+
+<section class="sec active" id="clients">
+  <div class="client-screen rev">
+    <div class="cs-title">Your clients</div>
+    <div class="cs-sub">Select a client to load their saved configuration, or add a new one</div>
+    <div class="client-grid" id="client-grid"></div>
+    <button class="add-client-btn" onclick="openModal()">+ Add new client</button>
+  </div>
+</section>
+
+<section class="sec" id="setup">
+  <div class="setup-card rev">
+    <h2>Connect data sources</h2>
+    <p id="setup-desc">Connect the data sources for this client. Required sources are marked.</p>
+    <div class="oauth-notice">
+      <strong>One-time setup:</strong> GSC and GA4 need a free Google OAuth Client ID.
+      <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#4285f4">Create one here</a> (~5 mins).
+      Enable Search Console API + Analytics Data API.<br><br>
+      <input id="oauth-client-id" placeholder="Paste your OAuth Client ID (e.g. 12345.apps.googleusercontent.com)" style="width:100%;padding:6px 10px;border:1px solid #f5c842;border-radius:8px;font-size:12px;font-family:monospace;background:white" oninput="localStorage.setItem('fibre_oauth_id',this.value)">
+    </div>
+    <div class="connect-grid" id="connect-grid"></div>
+    <div class="date-row">
+      <div class="date-field"><label>Start date</label><input type="date" id="date-start"></div>
+      <div class="date-field"><label>End date</label><input type="date" id="date-end"></div>
+    </div>
+    <button class="fetch-btn" id="fetch-btn" onclick="fetchAll()">&#10024; Fetch all data + generate AI narratives</button>
+    <div class="progress-bar" id="prog-bar"><div class="progress-fill" id="prog-fill"></div></div>
+    <div class="fetch-status" id="fetch-status">Connect your data sources above to get started</div>
+  </div>
+</section>
+
+<section class="sec" id="overview">
+  <div class="callout rev">
+    <div class="callout-lbl">Summary <span class="ai-badge">AI generated</span></div>
+    <p id="txt-overview">Fetch data to generate this narrative.</p>
+  </div>
+  <div class="mcards rev">
+    <div class="mc"><div class="mc-lbl">Organic Clicks</div><div class="mc-val" id="ov-clicks">&#8212;</div><span class="mc-d nt" id="ov-clicks-d"></span></div>
+    <div class="mc"><div class="mc-lbl">Impressions</div><div class="mc-val" id="ov-impr">&#8212;</div><span class="mc-d nt" id="ov-impr-d"></span></div>
+    <div class="mc"><div class="mc-lbl">Keywords Top 3</div><div class="mc-val" id="ov-top3">&#8212;</div><span class="mc-d nt" id="ov-top3-d"></span></div>
+    <div class="mc"><div class="mc-lbl">AI Sessions</div><div class="mc-val" id="ov-ai">&#8212;</div><span class="mc-d nt" id="ov-ai-d"></span></div>
+  </div>
+  <div class="two-col rev">
+    <div class="card"><div class="card-ttl">Clicks over time</div><div id="w-clicks-trend" style="position:relative;height:200px"><div class="empty"><span>&#128200;</span><p>Fetch data</p></div></div></div>
+    <div class="card"><div class="card-ttl">Top pages by clicks</div><div id="w-top-pages" style="position:relative;height:200px"><div class="empty"><span>&#128202;</span><p>Fetch data</p></div></div></div>
+  </div>
+  <div class="card rev">
+    <div class="card-ttl">Top performing pages</div>
+    <table class="tbl"><thead><tr><th>Page</th><th>Clicks</th><th>Impressions</th><th>Avg. pos</th></tr></thead>
+    <tbody id="tbl-overview"><tr class="er"><td colspan="4">Fetch data to populate</td></tr></tbody></table>
+  </div>
+</section>
+
+<section class="sec" id="traffic">
+  <div class="callout rev">
+    <div class="callout-lbl">Traffic narrative <span class="ai-badge">AI generated</span></div>
+    <p id="txt-traffic">Fetch data to generate this narrative.</p>
+  </div>
+  <div id="traffic-segments" class="rev"></div>
+  <div id="traffic-analytics" class="rev"></div>
+</section>
+
+<section class="sec" id="rankings">
+  <div class="callout rev">
+    <div class="callout-lbl">Rankings narrative <span class="ai-badge">AI generated</span></div>
+    <p id="txt-rankings">Fetch data to generate this narrative.</p>
+  </div>
+  <div class="mcards rev">
+    <div class="mc"><div class="mc-lbl">Keywords at #1</div><div class="mc-val" id="rk-p1">&#8212;</div><span class="mc-d nt" id="rk-p1-d"></span></div>
+    <div class="mc"><div class="mc-lbl">Keywords Top 3</div><div class="mc-val" id="rk-p3">&#8212;</div><span class="mc-d nt" id="rk-p3-d"></span></div>
+    <div class="mc"><div class="mc-lbl">Keywords Top 5</div><div class="mc-val" id="rk-p5">&#8212;</div><span class="mc-d nt" id="rk-p5-d"></span></div>
+    <div class="mc"><div class="mc-lbl">Keywords Top 10</div><div class="mc-val" id="rk-p10">&#8212;</div><span class="mc-d nt" id="rk-p10-d"></span></div>
+  </div>
+  <div class="card rev"><div class="card-ttl">Rankings distribution</div><div id="w-rankings" style="position:relative;height:220px"><div class="empty"><span>&#127919;</span><p>Fetch SE Rankings data</p></div></div></div>
+  <div class="card rev"><div class="card-ttl">Biggest movers</div><div class="wins" id="wins-grid"><div style="grid-column:1/-1;text-align:center;padding:1.5rem;color:var(--muted);font-size:13px;border:1.5px dashed var(--border);border-radius:10px">Fetch SE Rankings to see keyword wins</div></div></div>
+  <div id="regional-rankings" class="rev"></div>
+  <div id="ai-prompt-rankings" class="rev"></div>
+  <div class="card rev">
+    <div class="card-ttl">All tracked keywords</div>
+    <table class="tbl"><thead><tr><th>Keyword</th><th>Position</th><th>Prev.</th><th>Change</th><th>Search engine</th></tr></thead>
+    <tbody id="tbl-rankings"><tr class="er"><td colspan="5">Fetch SE Rankings to populate</td></tr></tbody></table>
+  </div>
+</section>
+
+<section class="sec" id="competitors">
+  <div class="callout rev">
+    <div class="callout-lbl">Competitor overview <span class="ai-badge">AI generated</span></div>
+    <p id="txt-competitors">Fetch data to generate this narrative.</p>
+  </div>
+  <div class="card rev">
+    <div class="card-ttl">Top 10% share vs competitors</div>
+    <div class="comp-grid" id="comp-grid"><div style="text-align:center;padding:2rem;color:var(--muted);font-size:13px">Fetch SE Rankings to see competitor data</div></div>
+  </div>
+  <div class="card rev">
+    <div class="card-ttl">Competitor distribution over time</div>
+    <div id="w-comp-trend" style="position:relative;height:240px"><div class="empty"><span>&#128202;</span><p>Fetch data</p></div></div>
+  </div>
+</section>
+
+<section class="sec" id="ai">
+  <div class="callout rev">
+    <div class="callout-lbl">AI visibility narrative <span class="ai-badge">AI generated</span></div>
+    <p id="txt-ai">Fetch data to generate this narrative.</p>
+  </div>
+  <div class="ai-sources rev">
+    <div class="ais"><div class="ais-name">ChatGPT</div><div class="ais-n" id="ai-chatgpt">&#8212;</div><div style="font-size:11px;color:var(--muted)">sessions</div></div>
+    <div class="ais"><div class="ais-name">Gemini</div><div class="ais-n" id="ai-gemini">&#8212;</div><div style="font-size:11px;color:var(--muted)">sessions</div></div>
+    <div class="ais"><div class="ais-name">Perplexity</div><div class="ais-n" id="ai-perplexity">&#8212;</div><div style="font-size:11px;color:var(--muted)">sessions</div></div>
+    <div class="ais"><div class="ais-name">Claude</div><div class="ais-n" id="ai-claude">&#8212;</div><div style="font-size:11px;color:var(--muted)">sessions</div></div>
+  </div>
+  <div class="mcards rev">
+    <div class="mc"><div class="mc-lbl">Total AI Sessions</div><div class="mc-val" id="ai-total">&#8212;</div><span class="mc-d nt" id="ai-total-d">MoM</span></div>
+    <div class="mc"><div class="mc-lbl">AI Views</div><div class="mc-val" id="ai-views">&#8212;</div></div>
+    <div class="mc"><div class="mc-lbl">Top Source</div><div class="mc-val" id="ai-top-src" style="font-size:15px">&#8212;</div></div>
+    <div class="mc"><div class="mc-lbl">Active Platforms</div><div class="mc-val" id="ai-platforms">&#8212;</div></div>
+  </div>
+  <div class="two-col rev">
+    <div class="card"><div class="card-ttl">Sessions by source</div><div id="w-ai-pie" style="position:relative;height:200px"><div class="empty"><span>&#129302;</span><p>Fetch data</p></div></div></div>
+    <div class="card"><div class="card-ttl">AI sessions trend</div><div id="w-ai-trend" style="position:relative;height:200px"><div class="empty"><span>&#128200;</span><p>Fetch data</p></div></div></div>
+  </div>
+  <div id="ai-prompt-section" class="rev">
+    <div class="card">
+      <div class="card-ttl">AI prompt rankings &mdash; ChatGPT</div>
+      <table class="tbl"><thead><tr><th>Prompt</th><th>Search engine</th><th>Link pos.</th><th>Mention pos.</th><th>Change</th></tr></thead>
+      <tbody id="tbl-ai-chatgpt"><tr class="er"><td colspan="5">Fetch SE Rankings AI tracker data</td></tr></tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-ttl">AI prompt rankings &mdash; Gemini</div>
+      <table class="tbl"><thead><tr><th>Prompt</th><th>Search engine</th><th>Link pos.</th><th>Mention pos.</th><th>Change</th></tr></thead>
+      <tbody id="tbl-ai-gemini-prompts"><tr class="er"><td colspan="5">Fetch SE Rankings AI tracker data</td></tr></tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-ttl">AI prompt rankings &mdash; AI Mode (Google)</div>
+      <table class="tbl"><thead><tr><th>Prompt</th><th>Search engine</th><th>Link pos.</th><th>Mention pos.</th><th>Change</th></tr></thead>
+      <tbody id="tbl-ai-mode"><tr class="er"><td colspan="5">Fetch SE Rankings AI tracker data</td></tr></tbody></table>
+    </div>
+  </div>
+  <div class="card rev">
+    <div class="card-ttl">Top AI landing pages</div>
+    <table class="tbl"><thead><tr><th>Page</th><th>Sessions</th><th>Source</th></tr></thead>
+    <tbody id="tbl-ai-pages"><tr class="er"><td colspan="3">Fetch data to populate</td></tr></tbody></table>
+  </div>
+</section>
+
+<section class="sec" id="gbp">
+  <div class="callout rev">
+    <div class="callout-lbl">Google Business Profile <span class="ai-badge">AI generated</span></div>
+    <p id="txt-gbp">Fetch GBP data to generate this narrative.</p>
+  </div>
+  <div class="mcards rev">
+    <div class="mc"><div class="mc-lbl">Website Clicks</div><div class="mc-val" id="gbp-clicks">&#8212;</div></div>
+    <div class="mc"><div class="mc-lbl">Call Interactions</div><div class="mc-val" id="gbp-calls">&#8212;</div></div>
+    <div class="mc"><div class="mc-lbl">Search Views</div><div class="mc-val" id="gbp-search">&#8212;</div></div>
+    <div class="mc"><div class="mc-lbl">Maps Views</div><div class="mc-val" id="gbp-maps">&#8212;</div></div>
+  </div>
+  <div class="card rev">
+    <div class="card-ttl">Performance by location</div>
+    <table class="tbl"><thead><tr><th>Location</th><th>Maps views</th><th>Search views</th><th>Website clicks</th><th>Calls</th></tr></thead>
+    <tbody id="tbl-gbp"><tr class="er"><td colspan="5">Connect GBP API to populate</td></tr></tbody></table>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  Prepared by <a href="https://fibre.marketing" target="_blank">Fibre Marketing</a> &middot; <span id="footer-period">&#8212;</span> &middot; <a href="mailto:team@fibre.marketing">team@fibre.marketing</a>
+</footer>
+
+<div class="meta-bar" id="meta-bar" style="display:none">
+  <label>Period</label>
+  <input id="pe-period" placeholder="e.g. Feb 2026" oninput="updateMeta()">
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2 id="modal-title">Add client</h2>
+      <button class="modal-close" onclick="closeModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <h3>Client details</h3>
+        <div class="form-row">
+          <div class="form-field"><label>Client name *</label><input id="m-name" placeholder="e.g. Hello Student"></div>
+          <div class="form-field"><label>Package *</label>
+            <select id="m-package">
+              <option value="seo">SEO only</option>
+              <option value="aio">AIO only</option>
+              <option value="both">SEO + AIO</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>Report sections</h3>
+        <div class="toggle-row"><div class="toggle-label">Competitor top 10%<small>SE Rankings competitor tracking</small></div><label class="toggle"><input type="checkbox" id="m-competitors"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+        <div class="toggle-row"><div class="toggle-label">Market visibility<small>% in top 10 by city</small></div><label class="toggle"><input type="checkbox" id="m-market"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+        <div class="toggle-row"><div class="toggle-label">Google Business Profile<small>Multi-location GBP data</small></div><label class="toggle"><input type="checkbox" id="m-gbp"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+        <div class="toggle-row"><div class="toggle-label">AI prompt rankings<small>SE Rankings AI Result Tracker</small></div><label class="toggle"><input type="checkbox" id="m-ai-rankings"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+        <div class="toggle-row"><div class="toggle-label">Branded / non-branded split<small>Separate GSC views</small></div><label class="toggle"><input type="checkbox" id="m-branded"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+        <div class="toggle-row"><div class="toggle-label">Local GSC clicks<small>GSC filtered to local pages</small></div><label class="toggle"><input type="checkbox" id="m-local"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+      </div>
+      <div class="form-section">
+        <h3>Data sources</h3>
+        <div class="form-row">
+          <div class="form-field"><label>Analytics tool</label>
+            <select id="m-analytics" onchange="document.getElementById('m-plausible-wrap').style.display=this.value==='plausible'?'block':'none'">
+              <option value="none">None</option>
+              <option value="plausible">Plausible</option>
+              <option value="ga4">GA4</option>
+            </select>
+          </div>
+          <div class="form-field" id="m-plausible-wrap" style="display:none">
+            <label>Plausible site domain</label>
+            <input id="m-plausible-site" placeholder="e.g. example.com">
+          </div>
+        </div>
+        <div class="toggle-row"><div class="toggle-label">Multiple websites<small>Client has more than one website</small></div><label class="toggle"><input type="checkbox" id="m-multi-site" onchange="document.getElementById('m-sites-wrap').style.display=this.checked?'block':'none'"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+        <div id="m-sites-wrap" style="display:none;margin-top:10px">
+          <div class="form-field"><label>Website names (comma separated)</label><input id="m-sites" placeholder="e.g. UK Flooring Direct, Flooring Supplies"></div>
+        </div>
+        <div class="toggle-row"><div class="toggle-label">Multiple regions / search engines<small>SE Rankings tracks multiple locations</small></div><label class="toggle"><input type="checkbox" id="m-regions" onchange="document.getElementById('m-regions-wrap').style.display=this.checked?'block':'none'"><span class="toggle-track"></span><span class="toggle-thumb"></span></label></div>
+        <div id="m-regions-wrap" style="display:none;margin-top:10px">
+          <div class="form-field"><label>Region names (comma separated)</label><input id="m-region-names" placeholder="e.g. Cheshire, Nottingham, Yorkshire"><div class="hint">Each region gets its own rankings tab</div></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>Custom GSC URL filters (optional)</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Add custom GSC segments filtered by URL path, e.g. /en-us/data-solutions/ for nVent, or commercial/non-commercial for Progeny.</p>
+        <div id="gsc-filters-list"></div>
+        <button onclick="addGSCFilter()" style="background:var(--off);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text);margin-top:6px">+ Add URL filter</button>
+      </div>
+      <div class="form-section">
+        <h3>Notes</h3>
+        <div class="form-field"><textarea id="m-notes" placeholder="Client-specific context for AI narratives..." style="min-height:70px;resize:vertical"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger" id="btn-delete" style="display:none;margin-right:auto" onclick="deleteClient()">Delete client</button>
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveClient()">Save client</button>
+    </div>
+  </div>
+</div>
+<script>
+
+// ══ STATE ══
+var clients = {};
+var activeClientId = null;
+var editingClientId = null;
+var gscFilterList = [];
+var D = { gsc: null, ser: null, plausible: null, ga4: null };
+var charts = {};
+var tokens = {};
+
+// ══ DEFAULT CLIENTS ══
+var DEFAULT_CLIENTS = {
+  'newmedica': {
+    name: 'Newmedica', package: 'both',
+    sections: { competitors: true, market: true, gbp: true, aiRankings: true, branded: true, local: true },
+    analytics: 'ga4', plausibleSite: '', multiSite: false, sites: [],
+    regions: false, regionNames: [],
+    gscFilters: [],
+    notes: 'Multi-location eye clinic. 20+ clinic locations for GBP. National + local rankings. Branded/non-branded split. GA4 tracks key events: infinity_call, form_submit, contact_click.'
+  },
+  'tseg': {
+    name: 'The Student Energy Group', package: 'seo',
+    sections: { competitors: true, market: false, gbp: false, aiRankings: false, branded: false, local: false },
+    analytics: 'ga4', plausibleSite: '', multiSite: false, sites: [],
+    regions: false, regionNames: [],
+    gscFilters: [{ label: 'Non-branded clicks', path: '' }],
+    notes: 'Energy comparison site for students. Competitors: Split The Bills, Save The Student, Uni Homes, U Switch, Billing Better. Track Top 10% share monthly.'
+  },
+  'progeny': {
+    name: 'Progeny', package: 'seo',
+    sections: { competitors: false, market: false, gbp: false, aiRankings: false, branded: false, local: false },
+    analytics: 'ga4', plausibleSite: '', multiSite: false, sites: [],
+    regions: false, regionNames: [],
+    gscFilters: [
+      { label: 'Financial Planning clicks', path: '/financial-planning' },
+      { label: 'Commercial clicks', path: '/services' },
+      { label: 'Non-commercial clicks', path: '/guides' }
+    ],
+    notes: 'Financial planning firm. International offices: London, Brussels (/en-be/), Hong Kong (/en-hk/). GSC split into 3 segments. GA4 for analytics.'
+  },
+  'hello-student': {
+    name: 'Hello Student', package: 'both',
+    sections: { competitors: true, market: false, gbp: false, aiRankings: true, branded: false, local: false },
+    analytics: 'plausible', plausibleSite: 'hellostudent.co.uk', multiSite: false, sites: [],
+    regions: true, regionNames: ['Birmingham','Southampton','Cornwall','North East','Manchester','Bristol','Liverpool','Edinburgh','York','Bath'],
+    gscFilters: [{ label: 'SEO focus (no brand)', path: '' }],
+    notes: 'Student accommodation provider. 10 competitor brands. Multiple city-based SE Rankings search engines. Two GSC views: SEO focus (no brand) and broad. Plausible for traffic.'
+  },
+  'keswick': {
+    name: 'Keswick', package: 'seo',
+    sections: { competitors: true, market: false, gbp: false, aiRankings: true, branded: false, local: false },
+    analytics: 'none', plausibleSite: '', multiSite: true, sites: ['UK Flooring Direct', 'Flooring Supplies'],
+    regions: false, regionNames: [],
+    gscFilters: [],
+    notes: 'Flooring retailer. Two websites: ukflooringdirect.co.uk and flooringsupplies.co.uk. Each has own competitor set. Flooring Supplies has brand-specific rankings (Karndean, Quickstep, Polyflor).'
+  },
+  'egm': {
+    name: 'EGM Shop', package: 'seo',
+    sections: { competitors: true, market: false, gbp: false, aiRankings: false, branded: false, local: false },
+    analytics: 'ga4', plausibleSite: '', multiSite: false, sites: [],
+    regions: false, regionNames: [],
+    gscFilters: [],
+    notes: 'Neon signs and artificial plant retailer. February 2026 is benchmark month. Competitors: Green Plant Walls, Neon Filter, Blooming Artificial, Evergreen Direct, Tuda Grass, Kings Of Neon, Neon Now, Evergreenry.'
+  },
+  'nvent': {
+    name: 'nVent', package: 'both',
+    sections: { competitors: true, market: false, gbp: false, aiRankings: true, branded: false, local: false },
+    analytics: 'ga4', plausibleSite: '', multiSite: false, sites: [],
+    regions: true, regionNames: ['UK', 'US'],
+    gscFilters: [{ label: 'Data Solutions (/en-us/data-solutions/)', path: '/en-us/data-solutions/' }],
+    notes: 'Global data centre cooling company. GSC filtered to /en-us/data-solutions/ section. UK + US markets tracked in SE Rankings AI tracker. Competitors: Vertiv, Schneider Electric, Airedale, CoolIT Systems, Stulz. Has separate AIO report.'
+  },
+  'carefound': {
+    name: 'Carefound', package: 'seo',
+    sections: { competitors: false, market: false, gbp: false, aiRankings: false, branded: false, local: true },
+    analytics: 'none', plausibleSite: '', multiSite: false, sites: [],
+    regions: true, regionNames: ['Cheshire', 'Nottingham', 'Yorkshire', 'National'],
+    gscFilters: [{ label: 'Core local pages (no brand)', path: '/home-care' }],
+    notes: 'Home care provider. 3 SE Rankings projects: Cheshire (171 keywords), Nottingham (134 keywords), Yorkshire (178 keywords). Each region has core + surrounding areas pages. Keywords are location+service combinations. National = 199 keywords combined. ChatGPT is dominant AI source.'
+  }
+};
+
+// ══ STORAGE ══
+async function loadClients() {
+  try {
+    var saved = await window.storage.get('fibre_clients');
+    if (saved && saved.value) {
+      clients = JSON.parse(saved.value);
+    } else {
+      clients = JSON.parse(JSON.stringify(DEFAULT_CLIENTS));
+      await window.storage.set('fibre_clients', JSON.stringify(clients));
+    }
+  } catch(e) {
+    clients = JSON.parse(JSON.stringify(DEFAULT_CLIENTS));
+  }
+  renderClientGrid();
+}
+
+async function saveClients() {
+  try { await window.storage.set('fibre_clients', JSON.stringify(clients)); } catch(e) {}
+}
+
+// ══ CLIENT GRID ══
+function renderClientGrid() {
+  var grid = document.getElementById('client-grid');
+  grid.innerHTML = '';
+  Object.keys(clients).forEach(function(id) {
+    var c = clients[id];
+    var pkgClass = c.package === 'seo' ? 'pkg-seo' : c.package === 'aio' ? 'pkg-aio' : 'pkg-both';
+    var pkgLabel = c.package === 'seo' ? 'SEO' : c.package === 'aio' ? 'AIO' : 'SEO + AIO';
+    var features = [];
+    if (c.multiSite) features.push('Multi-site');
+    if (c.regions && c.regionNames && c.regionNames.length) features.push(c.regionNames.length + ' regions');
+    if (c.sections && c.sections.competitors) features.push('Competitors');
+    if (c.sections && c.sections.aiRankings) features.push('AI Rankings');
+    if (c.sections && c.sections.gbp) features.push('GBP');
+    if (c.analytics && c.analytics !== 'none') features.push(c.analytics === 'plausible' ? 'Plausible' : 'GA4');
+    var div = document.createElement('div');
+    div.className = 'client-card' + (id === activeClientId ? ' active-client' : '');
+    div.innerHTML = '<div class="cc-name">' + esc(c.name) + '</div>' +
+      '<span class="cc-package ' + pkgClass + '">' + pkgLabel + '</span>' +
+      '<div class="cc-features">' + features.map(function(f){ return '<span class="cc-feat">' + f + '</span>'; }).join('') + '</div>';
+    div.onclick = function() { selectClient(id); };
+    var editBtn = document.createElement('button');
+    editBtn.style.cssText = 'background:none;border:none;font-size:11px;color:var(--muted);cursor:pointer;margin-top:8px;padding:0;font-family:inherit';
+    editBtn.textContent = '\u270F\uFE0F Edit';
+    editBtn.onclick = function(e) { e.stopPropagation(); openModal(id); };
+    div.appendChild(editBtn);
+    grid.appendChild(div);
+  });
+}
+
+// ══ SELECT CLIENT ══
+function selectClient(id) {
+  activeClientId = id;
+  var c = clients[id];
+  renderClientGrid();
+  document.getElementById('hdr-client').textContent = c.name;
+  document.getElementById('hero-eyebrow').textContent = 'Monthly SEO Report';
+  document.getElementById('hero-title').textContent = c.name + ' \u2014 Performance Overview';
+  document.getElementById('hero-sub').textContent = 'Your monthly organic search performance, rankings and AI visibility.';
+  document.getElementById('meta-bar').style.display = 'flex';
+  setDefaultDates();
+  configureTabs(c);
+  buildSetupPanel(c);
+  showSec('setup', document.getElementById('tab-setup'));
+}
+
+function configureTabs(c) {
+  ['setup','overview','traffic','rankings'].forEach(function(t) {
+    document.getElementById('tab-' + t).classList.remove('hidden');
+  });
+  var tabMap = {
+    'competitors': c.sections && c.sections.competitors,
+    'ai': c.package !== 'seo' || (c.sections && c.sections.aiRankings),
+    'gbp': c.sections && c.sections.gbp
+  };
+  Object.keys(tabMap).forEach(function(t) {
+    var el = document.getElementById('tab-' + t);
+    if (el) { if (tabMap[t]) el.classList.remove('hidden'); else el.classList.add('hidden'); }
+  });
+  document.getElementById('tab-clients').textContent = '\u2190 Clients';
+}
+
+// ══ SETUP PANEL ══
+function buildSetupPanel(c) {
+  var grid = document.getElementById('connect-grid');
+  grid.innerHTML = '';
+  var sites = (c.multiSite && c.sites && c.sites.length) ? c.sites : [''];
+
+  sites.forEach(function(site, i) {
+    var suf = site ? ('-' + i) : '';
+    var sid = 'gsc' + suf;
+    var label = site ? ('Google Search Console \u2014 ' + site) : 'Google Search Console';
+    grid.appendChild(makeConnBox(sid, 'GSC', '#e3f0fd', '#185fa5', label, 'Clicks, impressions, position', true, 'google'));
+  });
+
+  sites.forEach(function(site, i) {
+    var suf = site ? ('-' + i) : '';
+    var sid = 'ser' + suf;
+    var label = site ? ('SE Rankings \u2014 ' + site) : 'SE Rankings';
+    grid.appendChild(makeConnBox(sid, 'SER', '#e1f5ee', '#0f6e56', label, 'Keyword positions, AI prompt rankings', true, 'ser'));
+  });
+
+  if (c.analytics === 'plausible') {
+    grid.appendChild(makeConnBox('plausible', 'PLB', '#faeeda', '#854f0b', 'Plausible', 'Visitors, page views, AI referrals', false, 'plausible'));
+  } else if (c.analytics === 'ga4') {
+    grid.appendChild(makeConnBox('ga4', 'GA4', '#faeeda', '#854f0b', 'Google Analytics 4', 'Sessions, page views, AI referrals', false, 'google'));
+  }
+
+  if (c.sections && c.sections.gbp) {
+    grid.appendChild(makeConnBox('gbp', 'GBP', '#f3e8fe', '#6b21a8', 'Google Business Profile', 'Location views, clicks, calls', false, 'google'));
+  }
+
+  restoreConnections();
+}
+
+function makeConnBox(id, iconText, iconBg, iconColor, title, sub, required, type) {
+  var box = document.createElement('div');
+  box.className = 'conn-box';
+  box.id = 'box-' + id;
+
+  var reqBadge = required
+    ? '<span style="font-size:10px;background:#e3f0fd;color:#185fa5;padding:2px 7px;border-radius:10px;margin-left:4px">Required</span>'
+    : '<span style="font-size:10px;background:#f0f2f6;color:var(--muted);padding:2px 7px;border-radius:10px;margin-left:4px">Optional</span>';
+
+  var statusEl = document.createElement('div');
+  statusEl.id = 'status-' + id;
+  statusEl.className = 'conn-status pending';
+  statusEl.textContent = required ? '\u25CF Not connected' : '\u25CF Not connected (optional)';
+
+  box.innerHTML = '<div class="conn-top">' +
+    '<div class="conn-icon" style="background:' + iconBg + ';color:' + iconColor + '">' + iconText + '</div>' +
+    '<div class="conn-info"><h3>' + title + reqBadge + '</h3><p>' + sub + '</p></div>' +
+    '</div>';
+  box.appendChild(statusEl);
+
+  if (type === 'google') {
+    var btn = document.createElement('button');
+    btn.className = 'connect-btn cb-google';
+    btn.id = 'cbtn-' + id;
+    btn.innerHTML = GOOGLE_SVG_BTN + ' Connect';
+    btn.onclick = function() { startOAuth(id); };
+    box.appendChild(btn);
+
+    var propWrap = document.createElement('div');
+    propWrap.className = 'prop-wrap';
+    propWrap.id = 'prop-' + id;
+    propWrap.innerHTML = '<label>Select property</label><select id="sel-' + id + '"></select>';
+    box.appendChild(propWrap);
+
+    var disBtn = document.createElement('button');
+    disBtn.className = 'connect-btn cb-disconnect';
+    disBtn.id = 'dis-' + id;
+    disBtn.style.display = 'none';
+    disBtn.textContent = 'Disconnect';
+    disBtn.onclick = function() { disconnectSource(id); };
+    box.appendChild(disBtn);
+
+  } else if (type === 'ser') {
+    var apiWrap = document.createElement('div');
+    apiWrap.className = 'api-input-wrap';
+    apiWrap.id = 'api-' + id;
+    apiWrap.innerHTML = '<label>API key (Settings \u2192 API in SE Rankings)</label>' +
+      '<div class="api-input-row"><input id="key-' + id + '" placeholder="Paste API key..." type="password">' +
+      '<button class="connect-btn cb-teal" onclick="connectSER(\'' + id + '\')">Connect</button></div>';
+    box.appendChild(apiWrap);
+
+    var propW = document.createElement('div');
+    propW.className = 'prop-wrap';
+    propW.id = 'prop-' + id;
+    propW.innerHTML = '<label>Select project</label><select id="sel-' + id + '"></select>';
+    box.appendChild(propW);
+
+    var disB = document.createElement('button');
+    disB.className = 'connect-btn cb-disconnect';
+    disB.id = 'dis-' + id;
+    disB.style.display = 'none';
+    disB.textContent = 'Disconnect';
+    disB.onclick = function() { disconnectSER(id); };
+    box.appendChild(disB);
+
+  } else if (type === 'plausible') {
+    var plWrap = document.createElement('div');
+    plWrap.className = 'api-input-wrap';
+    plWrap.innerHTML = '<label>API key (Plausible \u2192 Settings \u2192 API Keys)</label>' +
+      '<div class="api-input-row"><input id="key-plausible" placeholder="Paste API key..." type="password"></div>' +
+      '<div style="margin-top:6px"><input id="site-plausible" placeholder="Site domain (e.g. hellostudent.co.uk)" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit"></div>' +
+      '<button class="connect-btn cb-teal" style="margin-top:6px" onclick="connectPlausible()">Connect</button>';
+    box.appendChild(plWrap);
+  }
+
+  return box;
+}
+
+var GOOGLE_SVG_BTN = '<svg width="12" height="12" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>';
+
+// ══ OAUTH ══
+function startOAuth(type) {
+  var clientId = document.getElementById('oauth-client-id').value.trim() || localStorage.getItem('fibre_oauth_id') || '';
+  if (!clientId) { alert('Please paste your Google OAuth Client ID first'); return; }
+  localStorage.setItem('fibre_oauth_id', clientId);
+  var scopeMap = {
+    'gbp': 'https://www.googleapis.com/auth/business.manage',
+    'ga4': 'https://www.googleapis.com/auth/analytics.readonly'
+  };
+  var scope = scopeMap[type] || 'https://www.googleapis.com/auth/webmasters.readonly';
+  var doOAuth = function() {
+    var client = google.accounts.oauth2.initTokenClient({
+      client_id: clientId, scope: scope,
+      callback: function(resp) {
+        if (resp.error) { alert('OAuth error: ' + resp.error); return; }
+        var saved = JSON.parse(localStorage.getItem('fibre_tokens') || '{}');
+        saved[type] = resp.access_token;
+        localStorage.setItem('fibre_tokens', JSON.stringify(saved));
+        tokens[type] = resp.access_token;
+        setConnected(type, '\u25CF Connected');
+        if (type === 'ga4') loadGA4Props(resp.access_token);
+        else if (type === 'gbp') loadGBPAccounts(resp.access_token);
+        else loadGSCProps(type, resp.access_token);
+      }
+    });
+    client.requestAccessToken();
+  };
+  if (!window.google || !window.google.accounts) {
+    var s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.onload = doOAuth;
+    document.head.appendChild(s);
+  } else { doOAuth(); }
+}
+
+function setConnected(id, msg) {
+  var box = document.getElementById('box-' + id);
+  var status = document.getElementById('status-' + id);
+  var dis = document.getElementById('dis-' + id);
+  var btn = document.getElementById('cbtn-' + id);
+  if (box) box.classList.add('connected');
+  if (status) { status.textContent = msg; status.className = 'conn-status ok'; }
+  if (dis) dis.style.display = 'block';
+  if (btn) btn.style.display = 'none';
+}
+
+function disconnectSource(id) {
+  var saved = JSON.parse(localStorage.getItem('fibre_tokens') || '{}');
+  delete saved[id];
+  localStorage.setItem('fibre_tokens', JSON.stringify(saved));
+  tokens[id] = null;
+  var box = document.getElementById('box-' + id);
+  if (box) box.classList.remove('connected');
+  var status = document.getElementById('status-' + id);
+  if (status) { status.textContent = '\u25CF Not connected'; status.className = 'conn-status pending'; }
+  var dis = document.getElementById('dis-' + id);
+  if (dis) dis.style.display = 'none';
+  var prop = document.getElementById('prop-' + id);
+  if (prop) prop.classList.remove('show');
+  var btn = document.getElementById('cbtn-' + id);
+  if (btn) btn.style.display = 'flex';
+}
+
+async function loadGSCProps(id, token) {
+  try {
+    var r = await fetch('https://www.googleapis.com/webmasters/v3/sites', { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    var sel = document.getElementById('sel-' + id);
+    if (!sel) return;
+    sel.innerHTML = '';
+    (d.siteEntry || []).forEach(function(s) {
+      var o = document.createElement('option');
+      o.value = s.siteUrl;
+      o.textContent = s.siteUrl.replace('sc-domain:','').replace(/https?:\/\//,'');
+      sel.appendChild(o);
+    });
+    var pw = document.getElementById('prop-' + id);
+    if (pw) pw.classList.add('show');
+  } catch(e) { console.error('GSC props:', e); }
+}
+
+async function loadGA4Props(token) {
+  try {
+    var r = await fetch('https://analyticsadmin.googleapis.com/v1beta/properties?filter=parent:accounts/-', { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    var sel = document.getElementById('sel-ga4');
+    if (!sel) return;
+    sel.innerHTML = '';
+    (d.properties || []).forEach(function(p) {
+      var o = document.createElement('option');
+      o.value = p.name.replace('properties/','');
+      o.textContent = p.displayName;
+      sel.appendChild(o);
+    });
+    var pw = document.getElementById('prop-ga4');
+    if (pw) pw.classList.add('show');
+  } catch(e) { console.error('GA4 props:', e); }
+}
+
+async function loadGBPAccounts(token) {
+  try {
+    var r = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', { headers: { Authorization: 'Bearer ' + token } });
+    var d = await r.json();
+    var sel = document.getElementById('sel-gbp');
+    if (!sel) return;
+    sel.innerHTML = '';
+    (d.accounts || []).forEach(function(a) {
+      var o = document.createElement('option');
+      o.value = a.name;
+      o.textContent = a.accountName || a.name;
+      sel.appendChild(o);
+    });
+    var pw = document.getElementById('prop-gbp');
+    if (pw) pw.classList.add('show');
+  } catch(e) { console.error('GBP accounts:', e); }
+}
+
+// ══ SE RANKINGS ══
+async function connectSER(id) {
+  var keyEl = document.getElementById('key-' + id);
+  if (!keyEl) return;
+  var key = keyEl.value.trim();
+  if (!key) { alert('Please enter your SE Rankings API key'); return; }
+  localStorage.setItem('fibre_ser_key_' + id, key);
+  try {
+    var r = await fetch('/api/ser/sites', { headers: { Authorization: key } });
+    if (!r.ok) throw new Error('Invalid key');
+    var projects = await r.json();
+    var list = Array.isArray(projects) ? projects : (projects.result || []);
+    var sel = document.getElementById('sel-' + id);
+    if (!sel) return;
+    sel.innerHTML = '';
+    list.forEach(function(p) {
+      var o = document.createElement('option');
+      o.value = p.id || p.site_id;
+      o.textContent = p.title || p.name || p.domain || ('Project ' + (p.id || p.site_id));
+      sel.appendChild(o);
+    });
+    var pw = document.getElementById('prop-' + id);
+    if (pw) pw.classList.add('show');
+    setConnected(id, '\u25CF Connected \u2014 ' + list.length + ' projects');
+    var apiWrap = document.getElementById('api-' + id);
+    if (apiWrap) apiWrap.style.display = 'none';
+    var box = document.getElementById('box-' + id);
+    if (box) box.classList.add('connected');
+  } catch(e) { alert('SE Rankings connection failed: ' + e.message); }
+}
+
+function disconnectSER(id) {
+  localStorage.removeItem('fibre_ser_key_' + id);
+  var box = document.getElementById('box-' + id);
+  if (box) box.classList.remove('connected');
+  var apiWrap = document.getElementById('api-' + id);
+  if (apiWrap) apiWrap.style.display = 'flex';
+  var status = document.getElementById('status-' + id);
+  if (status) { status.textContent = '\u25CF Not connected'; status.className = 'conn-status pending'; }
+  var dis = document.getElementById('dis-' + id);
+  if (dis) dis.style.display = 'none';
+  var prop = document.getElementById('prop-' + id);
+  if (prop) prop.classList.remove('show');
+}
+
+// ══ PLAUSIBLE ══
+async function connectPlausible() {
+  var keyEl = document.getElementById('key-plausible');
+  var siteEl = document.getElementById('site-plausible');
+  var key = keyEl ? keyEl.value.trim() : '';
+  var site = siteEl ? siteEl.value.trim() : '';
+  if (!key || !site) { alert('Please enter both API key and site domain'); return; }
+  localStorage.setItem('fibre_plausible_key', key);
+  localStorage.setItem('fibre_plausible_site', site);
+  try {
+    var r = await fetch('https://plausible.io/api/v2/query', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ site_id: site, metrics: ['visitors'], date_range: '7d' })
+    });
+    if (!r.ok) throw new Error('Invalid key or site');
+    setConnected('plausible', '\u25CF Connected \u2014 ' + site);
+  } catch(e) { alert('Plausible connection failed: ' + e.message); }
+}
+
+// ══ RESTORE CONNECTIONS ══
+function restoreConnections() {
+  var savedId = localStorage.getItem('fibre_oauth_id');
+  if (savedId) {
+    var el = document.getElementById('oauth-client-id');
+    if (el) el.value = savedId;
+  }
+  var saved = JSON.parse(localStorage.getItem('fibre_tokens') || '{}');
+  Object.keys(saved).forEach(function(type) {
+    if (saved[type]) {
+      tokens[type] = saved[type];
+      setConnected(type, '\u25CF Connected');
+      if (type === 'ga4') loadGA4Props(saved[type]);
+      else if (type === 'gbp') loadGBPAccounts(saved[type]);
+      else if (type.indexOf('gsc') === 0) loadGSCProps(type, saved[type]);
+    }
+  });
+  ['ser', 'ser-0', 'ser-1'].forEach(function(id) {
+    var k = localStorage.getItem('fibre_ser_key_' + id);
+    var el = document.getElementById('key-' + id);
+    if (k && el) { el.value = k; connectSER(id).catch(function(){}); }
+  });
+  var plKey = localStorage.getItem('fibre_plausible_key');
+  var plSite = localStorage.getItem('fibre_plausible_site');
+  var plEl = document.getElementById('key-plausible');
+  var plSiteEl = document.getElementById('site-plausible');
+  if (plKey && plEl) plEl.value = plKey;
+  if (plSite && plSiteEl) plSiteEl.value = plSite;
+}
+
+// ══ DEFAULT DATES ══
+function setDefaultDates() {
+  var now = new Date();
+  var y = now.getFullYear(), m = now.getMonth();
+  var start = new Date(y, m-1, 1);
+  var end = new Date(y, m, 0);
+  document.getElementById('date-start').value = start.toISOString().slice(0,10);
+  document.getElementById('date-end').value = end.toISOString().slice(0,10);
+  var monthName = start.toLocaleString('en-GB', { month: 'long' });
+  var periodEl = document.getElementById('pe-period');
+  if (periodEl && !periodEl.value) periodEl.value = monthName + ' ' + y;
+  updateMeta();
+}
+
+// ══ FETCH ALL ══
+async function fetchAll() {
+  var c = clients[activeClientId];
+  var btn = document.getElementById('fetch-btn');
+  var fill = document.getElementById('prog-fill');
+  var bar = document.getElementById('prog-bar');
+  var statusEl = document.getElementById('fetch-status');
+  var startDate = document.getElementById('date-start').value;
+  var endDate = document.getElementById('date-end').value;
+
+  btn.disabled = true;
+  bar.classList.add('show');
+
+  function prog(p, msg) {
+    fill.style.width = p + '%';
+    statusEl.innerHTML = '<div style="display:flex;align-items:center;gap:8px;justify-content:center"><div class="dot-pulse"><span></span><span></span><span></span></div>' + msg + '</div>';
+  }
+
+  try {
+    var gscToken = tokens['gsc'];
+    var gscSel = document.getElementById('sel-gsc');
+    var gscSite = gscSel ? gscSel.value : '';
+    if (gscToken && gscSite) {
+      prog(15, 'Fetching Google Search Console data...');
+      await fetchGSC(gscToken, gscSite, startDate, endDate);
+      prog(35, 'GSC data loaded...');
+    }
+
+    var serKey = localStorage.getItem('fibre_ser_key_ser');
+    var serSel = document.getElementById('sel-ser');
+    var serProject = serSel ? serSel.value : '';
+    if (serKey && serProject) {
+      prog(45, 'Fetching SE Rankings data...');
+      await fetchSER(serKey, serProject, startDate, endDate, c);
+      prog(60, 'SE Rankings data loaded...');
+    }
+
+    if (c.analytics === 'plausible') {
+      var plKey = localStorage.getItem('fibre_plausible_key');
+      var plSite = localStorage.getItem('fibre_plausible_site');
+      if (plKey && plSite) {
+        prog(65, 'Fetching Plausible data...');
+        await fetchPlausible(plKey, plSite, startDate, endDate);
+        prog(75, 'Analytics loaded...');
+      }
+    } else if (c.analytics === 'ga4') {
+      var ga4Token = tokens['ga4'];
+      var ga4Sel = document.getElementById('sel-ga4');
+      var ga4Prop = ga4Sel ? ga4Sel.value : '';
+      if (ga4Token && ga4Prop) {
+        prog(65, 'Fetching GA4 data...');
+        await fetchGA4(ga4Token, ga4Prop, startDate, endDate);
+        prog(75, 'Analytics loaded...');
+      }
+    }
+
+    prog(82, 'AI is writing your narratives...');
+    await generateNarratives(c);
+    prog(100, '');
+    btn.disabled = false;
+    statusEl.innerHTML = '\u2705 Done! Click any tab to view the report.';
+    setTimeout(function() { document.getElementById('tab-overview').click(); }, 1000);
+  } catch(err) {
+    btn.disabled = false;
+    statusEl.textContent = 'Error: ' + (err.message || 'Something went wrong');
+    console.error(err);
+  }
+}
+
+// ══ GSC ══
+async function fetchGSC(token, siteUrl, startDate, endDate) {
+  var enc = encodeURIComponent(siteUrl);
+  var url = 'https://www.googleapis.com/webmasters/v3/sites/' + enc + '/searchAnalytics/query';
+  var h = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
+  var results = await Promise.all([
+    fetch(url, { method:'POST', headers:h, body:JSON.stringify({ startDate: startDate, endDate: endDate, dimensions:['page'], rowLimit:25000 }) }),
+    fetch(url, { method:'POST', headers:h, body:JSON.stringify({ startDate: startDate, endDate: endDate, dimensions:['date'], rowLimit:500 }) })
+  ]);
+  var pageData = await results[0].json();
+  var dateData = await results[1].json();
+  D.gsc = { pages: pageData.rows || [], dates: dateData.rows || [] };
+  processGSC(D.gsc);
+}
+
+function processGSC(data) {
+  var pages = data.pages || [];
+  var dates = data.dates || [];
+  var totalClicks = pages.reduce(function(s,r){ return s + (r.clicks||0); }, 0);
+  var totalImpr = pages.reduce(function(s,r){ return s + (r.impressions||0); }, 0);
+
+  document.getElementById('ov-clicks').textContent = fmt(totalClicks);
+  document.getElementById('ov-impr').textContent = fmt(totalImpr);
+
+  var top = pages.slice().sort(function(a,b){ return (b.clicks||0)-(a.clicks||0); }).slice(0,20);
+  document.getElementById('tbl-overview').innerHTML = top.map(function(r) {
+    var pg = (r.keys[0]||'').replace(/https?:\/\/[^\/]+/,'').replace(/\?.*/,'').slice(0,50);
+    return '<tr><td><div style="font-weight:500">' + esc(pg) + '</div></td><td><strong>' + fmt(r.clicks||0) + '</strong></td><td>' + fmt(r.impressions||0) + '</td><td>' + ((r.position||0).toFixed(1)) + '</td></tr>';
+  }).join('') || '<tr class="er"><td colspan="4">No data</td></tr>';
+
+  var top8 = top.slice(0,8);
+  buildHorizBar('w-top-pages', 'top-pages-bar',
+    top8.map(function(r){ return (r.keys[0]||'').replace(/https?:\/\/[^\/]+/,'').replace(/\?.*/,'').slice(0,22); }),
+    top8.map(function(r){ return Math.round(r.clicks||0); })
+  );
+
+  if (dates.length > 1) {
+    buildLineChart('w-clicks-trend', 'clicks-line',
+      dates.map(function(r){ return r.keys[0].slice(5); }),
+      dates.map(function(r){ return Math.round(r.clicks||0); }),
+      '#3ecfa3'
+    );
+  }
+  buildTrafficSegments();
+}
+
+function buildTrafficSegments() {
+  var c = clients[activeClientId];
+  var seg = document.getElementById('traffic-segments');
+  if (!seg || !c) return;
+  var html = '';
+  if (c.sections && c.sections.branded) {
+    html += '<div class="card"><div class="card-ttl">Branded vs non-branded clicks</div><div class="empty"><span>\uD83D\uDCCA</span><p>Branded/non-branded split</p></div></div>';
+  }
+  if (c.gscFilters && c.gscFilters.length) {
+    c.gscFilters.forEach(function(f, i) {
+      html += '<div class="card"><div class="card-ttl">' + esc(f.label) + '</div>' +
+        '<div class="mcards"><div class="mc"><div class="mc-lbl">Clicks MoM</div><div class="mc-val">\u2014</div></div><div class="mc"><div class="mc-lbl">Clicks YoY</div><div class="mc-val">\u2014</div></div></div>' +
+        '<div id="w-seg-' + i + '" style="position:relative;height:160px"><div class="empty"><span>\uD83D\uDCC8</span><p>Filter: ' + esc(f.path || 'custom') + '</p></div></div></div>';
+    });
+  }
+  seg.innerHTML = html;
+}
+
+// ══ SE RANKINGS ══
+async function fetchSER(apiKey, siteId, startDate, endDate, clientConfig) {
+  try {
+    var r = await fetch('/api/ser/sites/' + siteId + '/positions/?date_from=' + startDate + '&date_to=' + endDate, { headers: { Authorization: apiKey } });
+    var data;
+    if (!r.ok) {
+      var r2 = await fetch('/api/ser/sites/' + siteId + '/keywords/', { headers: { Authorization: apiKey } });
+      data = await r2.json();
+      D.ser = (Array.isArray(data) ? data : (data.result || [])).map(function(k) {
+        return { keyword: k.name||k.keyword||'', position: parseFloat(k.position||k.pos||999)||999, previousPosition: parseFloat(k.previous_position||k.prev_pos||0)||0, volume: k.volume||0, searchEngine: k.search_engine||k.se||'Google UK' };
+      });
+    } else {
+      data = await r.json();
+      D.ser = (Array.isArray(data) ? data : (data.result||data.keywords||[])).map(function(k) {
+        return { keyword: k.name||k.keyword||k.query||'', position: parseFloat(k.position||k.pos||k.rank||999)||999, previousPosition: parseFloat(k.previous_position||k.prev_pos||k.prev_rank||0)||0, volume: k.volume||0, searchEngine: k.search_engine||k.se||'Google UK' };
+      });
+    }
+    processSER(D.ser, clientConfig);
+  } catch(e) { console.warn('SE Rankings:', e.message); }
+}
+
+function processSER(rows, c) {
+  if (!rows || !rows.length) return;
+  var p1 = rows.filter(function(r){ return r.position <= 1; }).length;
+  var p3 = rows.filter(function(r){ return r.position <= 3; }).length;
+  var p5 = rows.filter(function(r){ return r.position <= 5; }).length;
+  var p10 = rows.filter(function(r){ return r.position <= 10; }).length;
+  document.getElementById('rk-p1').textContent = p1;
+  document.getElementById('rk-p3').textContent = p3;
+  document.getElementById('rk-p5').textContent = p5;
+  document.getElementById('rk-p10').textContent = p10;
+  document.getElementById('ov-top3').textContent = p3;
+  buildBarChart('w-rankings', 'rk-bar', ['#1', 'Top 3', 'Top 5', 'Top 10'], [p1, p3, p5, p10]);
+
+  var movers = rows.filter(function(r){ return r.previousPosition > 0 && r.position > 0 && r.previousPosition > r.position; })
+    .map(function(r){ return { kw: r.keyword, old: r.previousPosition, pos: r.position, gain: r.previousPosition - r.position }; })
+    .sort(function(a,b){ return b.gain - a.gain; }).slice(0, 9);
+  if (movers.length) {
+    document.getElementById('wins-grid').innerHTML = movers.map(function(m) {
+      return '<div class="win"><div class="win-kw">' + esc(m.kw) + '</div><div class="win-move"><span class="win-old">' + Math.round(m.old) + '</span><span class="win-arr">\u2192</span><span class="win-new">' + Math.round(m.pos) + '</span></div><span class="win-badge">+' + Math.round(m.gain) + '</span></div>';
+    }).join('');
+  }
+
+  var sorted = rows.slice().sort(function(a,b){ return a.position - b.position; }).slice(0, 100);
+  document.getElementById('tbl-rankings').innerHTML = sorted.map(function(r) {
+    var diff = r.previousPosition > 0 ? r.previousPosition - r.position : 0;
+    var dh = diff > 0 ? '<span class="du">+' + Math.round(diff) + '</span>' : diff < 0 ? '<span class="dd">' + Math.round(diff) + '</span>' : '<span class="df">\u2014</span>';
+    var bg = r.position <= 1 ? 'background:#fff3e0;color:#e65100' : r.position <= 3 ? 'background:#e8f5e9;color:#1b5e20' : r.position <= 10 ? 'background:#e3f2fd;color:#0d47a1' : 'background:#f0f2f6;color:#6b7a94';
+    return '<tr><td style="font-weight:500">' + esc(r.keyword) + '</td><td><span style="display:inline-block;min-width:28px;text-align:center;padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700;' + bg + '">' + Math.round(r.position) + '</span></td><td>' + (r.previousPosition > 0 ? Math.round(r.previousPosition) : '\u2014') + '</td><td>' + dh + '</td><td class="url">' + esc(r.searchEngine || '') + '</td></tr>';
+  }).join('') || '<tr class="er"><td colspan="5">No data</td></tr>';
+
+  if (c && c.regions && c.regionNames && c.regionNames.length) buildRegionalRankings(rows, c.regionNames);
+}
+
+function buildRegionalRankings(rows, regions) {
+  var container = document.getElementById('regional-rankings');
+  if (!container) return;
+  var tabsHtml = '<div class="region-tabs">';
+  var panelsHtml = '';
+  regions.forEach(function(region, i) {
+    var regionRows = rows.filter(function(r){ return (r.searchEngine||'').toLowerCase().indexOf(region.toLowerCase()) >= 0; });
+    var p3 = regionRows.filter(function(r){ return r.position <= 3; }).length;
+    var p10 = regionRows.filter(function(r){ return r.position <= 10; }).length;
+    tabsHtml += '<button class="rtab' + (i===0?' active':'') + '" onclick="switchRegion(' + i + ')">' + esc(region) + '</button>';
+    panelsHtml += '<div class="region-panel' + (i===0?' active':'') + '" id="rpanel-' + i + '">' +
+      '<div class="mcards" style="margin-bottom:1rem">' +
+      '<div class="mc"><div class="mc-lbl">Top 3</div><div class="mc-val">' + p3 + '</div></div>' +
+      '<div class="mc"><div class="mc-lbl">Top 10</div><div class="mc-val">' + p10 + '</div></div>' +
+      '<div class="mc"><div class="mc-lbl">Total tracked</div><div class="mc-val">' + regionRows.length + '</div></div>' +
+      '</div>' +
+      '<table class="tbl"><thead><tr><th>Keyword</th><th>Position</th><th>Prev.</th><th>Change</th><th>Location</th></tr></thead><tbody>' +
+      regionRows.slice().sort(function(a,b){ return a.position-b.position; }).slice(0,50).map(function(r) {
+        var diff = r.previousPosition > 0 ? r.previousPosition - r.position : 0;
+        var dh = diff > 0 ? '<span class="du">+' + Math.round(diff) + '</span>' : diff < 0 ? '<span class="dd">' + Math.round(diff) + '</span>' : '<span class="df">\u2014</span>';
+        var bg = r.position <= 1 ? 'background:#fff3e0;color:#e65100' : r.position <= 3 ? 'background:#e8f5e9;color:#1b5e20' : r.position <= 10 ? 'background:#e3f2fd;color:#0d47a1' : 'background:#f0f2f6;color:#6b7a94';
+        return '<tr><td style="font-weight:500">' + esc(r.keyword) + '</td><td><span style="display:inline-block;min-width:28px;text-align:center;padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700;' + bg + '">' + Math.round(r.position) + '</span></td><td>' + (r.previousPosition > 0 ? Math.round(r.previousPosition) : '\u2014') + '</td><td>' + dh + '</td><td class="url">' + esc(r.searchEngine||'') + '</td></tr>';
+      }).join('') + (regionRows.length === 0 ? '<tr class="er"><td colspan="5">No data for this region</td></tr>' : '') +
+      '</tbody></table></div>';
+  });
+  tabsHtml += '</div>';
+  container.innerHTML = '<div class="card"><div class="card-ttl">Rankings by region / location</div>' + tabsHtml + panelsHtml + '</div>';
+}
+
+function switchRegion(i) {
+  document.querySelectorAll('.rtab').forEach(function(t, idx){ t.classList.toggle('active', idx === i); });
+  document.querySelectorAll('.region-panel').forEach(function(p, idx){ p.classList.toggle('active', idx === i); });
+}
+
+// ══ PLAUSIBLE ══
+async function fetchPlausible(key, site, startDate, endDate) {
+  var h = { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' };
+  var dr = [startDate, endDate];
+  var results = await Promise.all([
+    fetch('https://plausible.io/api/v2/query', { method:'POST', headers:h, body:JSON.stringify({ site_id:site, metrics:['visitors','pageviews'], date_range:dr, dimensions:['event:page'], order_by:[['visitors','desc']], pagination:{limit:50} }) }),
+    fetch('https://plausible.io/api/v2/query', { method:'POST', headers:h, body:JSON.stringify({ site_id:site, metrics:['visitors'], date_range:dr, dimensions:['visit:referrer','event:page'], filters:[['contains','visit:referrer',['chatgpt','gemini','perplexity','claude']]], pagination:{limit:100} }) })
+  ]);
+  var pData = await results[0].json();
+  var aiData = await results[1].json();
+  D.plausible = { pages: pData, ai: aiData };
+  processAnalytics('plausible', D.plausible);
+}
+
+// ══ GA4 ══
+async function fetchGA4(token, propId, startDate, endDate) {
+  var url = 'https://analyticsdata.googleapis.com/v1beta/properties/' + propId + ':runReport';
+  var h = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
+  var results = await Promise.all([
+    fetch(url, { method:'POST', headers:h, body:JSON.stringify({ dateRanges:[{startDate:startDate,endDate:endDate}], dimensions:[{name:'pagePath'}], metrics:[{name:'sessions'},{name:'screenPageViews'}], orderBys:[{metric:{metricName:'sessions'},desc:true}], limit:100 }) }),
+    fetch(url, { method:'POST', headers:h, body:JSON.stringify({ dateRanges:[{startDate:startDate,endDate:endDate}], dimensions:[{name:'sessionSource'},{name:'pagePath'}], metrics:[{name:'sessions'},{name:'screenPageViews'}], dimensionFilter:{filter:{fieldName:'sessionSource',inListFilter:{values:['chatgpt.com','gemini.google.com','perplexity.ai','claude.ai']}}}, orderBys:[{metric:{metricName:'sessions'},desc:true}], limit:200 }) })
+  ]);
+  var pData = await results[0].json();
+  var aiData = await results[1].json();
+  D.ga4 = { pages: pData, ai: aiData };
+  processAnalytics('ga4', D.ga4);
+}
+
+function processAnalytics(type, data) {
+  var pages = [], aiTotals = { chatgpt:0, gemini:0, perplexity:0, claude:0 }, aiRows = [];
+  if (type === 'plausible') {
+    pages = (data.pages && data.pages.results || []).map(function(r){ return { page: r.dimensions[0], visitors: r.metrics[0]||0, views: r.metrics[1]||0 }; });
+    (data.ai && data.ai.results || []).forEach(function(r) {
+      var ref = (r.dimensions[0]||'').toLowerCase(), n = r.metrics[0]||0;
+      if (ref.indexOf('chatgpt') >= 0) aiTotals.chatgpt += n;
+      else if (ref.indexOf('gemini') >= 0) aiTotals.gemini += n;
+      else if (ref.indexOf('perplexity') >= 0) aiTotals.perplexity += n;
+      else if (ref.indexOf('claude') >= 0) aiTotals.claude += n;
+      aiRows.push({ page: r.dimensions[1]||'', sessions: n, source: ref });
+    });
+  } else {
+    pages = (data.pages && data.pages.rows || []).map(function(r){ return { page: r.dimensionValues[0].value, visitors: parseFloat(r.metricValues[0].value)||0, views: parseFloat(r.metricValues[1].value)||0 }; });
+    (data.ai && data.ai.rows || []).forEach(function(r) {
+      var src = (r.dimensionValues[0].value||'').toLowerCase(), n = parseFloat(r.metricValues[0].value)||0;
+      if (src.indexOf('chatgpt') >= 0) aiTotals.chatgpt += n;
+      else if (src.indexOf('gemini') >= 0) aiTotals.gemini += n;
+      else if (src.indexOf('perplexity') >= 0) aiTotals.perplexity += n;
+      else if (src.indexOf('claude') >= 0) aiTotals.claude += n;
+      aiRows.push({ page: r.dimensionValues[1].value||'', sessions: n, source: src });
+    });
+  }
+
+  var analyticsEl = document.getElementById('traffic-analytics');
+  if (analyticsEl) {
+    analyticsEl.innerHTML = '<div class="card"><div class="card-ttl">' + (type === 'plausible' ? 'Plausible' : 'GA4') + ' \u2014 top pages</div>' +
+      '<table class="tbl"><thead><tr><th>Page</th><th>' + (type === 'plausible' ? 'Visitors' : 'Sessions') + '</th><th>Views</th></tr></thead><tbody>' +
+      pages.slice(0,20).map(function(r){ return '<tr><td class="url">' + esc(r.page) + '</td><td><strong>' + fmt(r.visitors) + '</strong></td><td>' + fmt(r.views) + '</td></tr>'; }).join('') +
+      (pages.length === 0 ? '<tr class="er"><td colspan="3">No data</td></tr>' : '') +
+      '</tbody></table></div>';
+  }
+
+  var total = aiTotals.chatgpt + aiTotals.gemini + aiTotals.perplexity + aiTotals.claude;
+  document.getElementById('ai-chatgpt').textContent = fmt(aiTotals.chatgpt) || '0';
+  document.getElementById('ai-gemini').textContent = fmt(aiTotals.gemini) || '0';
+  document.getElementById('ai-perplexity').textContent = fmt(aiTotals.perplexity) || '0';
+  document.getElementById('ai-claude').textContent = fmt(aiTotals.claude) || '0';
+  document.getElementById('ai-total').textContent = fmt(total);
+  document.getElementById('ov-ai').textContent = fmt(total);
+
+  var topSrc = Object.keys(aiTotals).filter(function(k){ return aiTotals[k] > 0; }).sort(function(a,b){ return aiTotals[b]-aiTotals[a]; });
+  if (topSrc.length) {
+    document.getElementById('ai-top-src').textContent = topSrc[0].charAt(0).toUpperCase() + topSrc[0].slice(1);
+    document.getElementById('ai-platforms').textContent = topSrc.length;
+  }
+  if (total > 0) buildDoughnut('w-ai-pie', 'ai-pie', ['ChatGPT','Gemini','Perplexity','Claude'], [aiTotals.chatgpt, aiTotals.gemini, aiTotals.perplexity, aiTotals.claude]);
+  document.getElementById('tbl-ai-pages').innerHTML = aiRows.slice(0,15).map(function(r){ return '<tr><td class="url">' + esc(r.page) + '</td><td><strong>' + fmt(r.sessions) + '</strong></td><td class="url">' + esc(r.source) + '</td></tr>'; }).join('') || '<tr class="er"><td colspan="3">No AI referral data</td></tr>';
+}
+
+// ══ AI NARRATIVES ══
+async function generateNarratives(c) {
+  var period = document.getElementById('pe-period') ? document.getElementById('pe-period').value : '';
+  var prompt = 'You are writing professional, friendly SEO performance narratives for a monthly client report from Fibre Marketing agency.\n\nClient: ' + c.name + '\nPackage: ' + (c.package === 'both' ? 'SEO + AIO' : c.package.toUpperCase()) + '\nPeriod: ' + (period || 'this month') + '\n';
+  if (c.notes) prompt += '\nClient context: ' + c.notes + '\n';
+
+  if (D.gsc && D.gsc.pages) {
+    var pages = D.gsc.pages;
+    var totalClicks = pages.reduce(function(s,r){ return s+(r.clicks||0); }, 0);
+    var totalImpr = pages.reduce(function(s,r){ return s+(r.impressions||0); }, 0);
+    var top5 = pages.slice().sort(function(a,b){ return (b.clicks||0)-(a.clicks||0); }).slice(0,5).map(function(r){ return '  - ' + (r.keys[0]||'').replace(/https?:\/\/[^/]+/,'').slice(0,50) + ': ' + Math.round(r.clicks||0) + ' clicks'; }).join('\n');
+    prompt += '\nGSC: ' + Math.round(totalClicks) + ' clicks, ' + Math.round(totalImpr) + ' impressions\nTop pages:\n' + top5 + '\n';
+  }
+  if (D.ser && D.ser.length) {
+    var p3 = D.ser.filter(function(r){ return r.position <= 3; }).length;
+    var p10 = D.ser.filter(function(r){ return r.position <= 10; }).length;
+    var movers = D.ser.filter(function(r){ return r.previousPosition > 0 && r.position > 0 && r.previousPosition > r.position; }).map(function(r){ return { kw:r.keyword, gain:r.previousPosition-r.position, pos:r.position, old:r.previousPosition }; }).sort(function(a,b){ return b.gain-a.gain; }).slice(0,3);
+    prompt += '\nSE Rankings: Top 3: ' + p3 + ', Top 10: ' + p10 + ', Total: ' + D.ser.length;
+    if (movers.length) prompt += '\nBig movers: ' + movers.map(function(m){ return '"' + m.kw + '" ' + Math.round(m.old) + '->' + Math.round(m.pos); }).join(', ');
+    prompt += '\n';
+  }
+
+  var sections = ['OVERVIEW', 'TRAFFIC', 'RANKINGS'];
+  if (c.sections && c.sections.competitors) sections.push('COMPETITORS');
+  if (c.package !== 'seo' || (c.sections && c.sections.aiRankings)) sections.push('AI');
+
+  prompt += '\nWrite ' + sections.length + ' short narrative sections (2-3 sentences each, professional but friendly, plain English for a non-technical client). Highlight wins. Format EXACTLY as:\n' + sections.map(function(s){ return s + ':\n'; }).join('');
+
+  var r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+  });
+  var data = await r.json();
+  var text = (data.content && data.content[0] && data.content[0].text) || '';
+
+  function getSection(key, nextKeys) {
+    var pattern = key + ':\\s*([\\s\\S]*?)(?=' + nextKeys.join(':|') + ':|$)';
+    var m = text.match(new RegExp(pattern, 'i'));
+    return m ? m[1].trim() : '';
+  }
+
+  var rest = sections.slice(1);
+  var overview = getSection('OVERVIEW', rest);
+  if (overview) document.getElementById('txt-overview').textContent = overview;
+
+  var traffic = getSection('TRAFFIC', ['RANKINGS','COMPETITORS','AI']);
+  if (traffic) document.getElementById('txt-traffic').textContent = traffic;
+
+  var rankings = getSection('RANKINGS', ['COMPETITORS','AI']);
+  if (rankings) document.getElementById('txt-rankings').textContent = rankings;
+
+  var comp = getSection('COMPETITORS', ['AI']);
+  var compEl = document.getElementById('txt-competitors');
+  if (comp && compEl) compEl.textContent = comp;
+
+  var ai = getSection('AI', []);
+  var aiEl = document.getElementById('txt-ai');
+  if (ai && aiEl) aiEl.textContent = ai;
+}
+
+// ══ MODAL ══
+function openModal(id) {
+  editingClientId = id || null;
+  gscFilterList = [];
+  var title = document.getElementById('modal-title');
+  var del = document.getElementById('btn-delete');
+  if (id && clients[id]) {
+    var c = clients[id];
+    title.textContent = 'Edit \u2014 ' + c.name;
+    del.style.display = 'block';
+    document.getElementById('m-name').value = c.name;
+    document.getElementById('m-package').value = c.package;
+    document.getElementById('m-competitors').checked = !!(c.sections && c.sections.competitors);
+    document.getElementById('m-market').checked = !!(c.sections && c.sections.market);
+    document.getElementById('m-gbp').checked = !!(c.sections && c.sections.gbp);
+    document.getElementById('m-ai-rankings').checked = !!(c.sections && c.sections.aiRankings);
+    document.getElementById('m-branded').checked = !!(c.sections && c.sections.branded);
+    document.getElementById('m-local').checked = !!(c.sections && c.sections.local);
+    document.getElementById('m-analytics').value = c.analytics || 'none';
+    document.getElementById('m-plausible-site').value = c.plausibleSite || '';
+    document.getElementById('m-plausible-wrap').style.display = c.analytics === 'plausible' ? 'block' : 'none';
+    document.getElementById('m-multi-site').checked = !!c.multiSite;
+    document.getElementById('m-sites').value = (c.sites || []).join(', ');
+    document.getElementById('m-sites-wrap').style.display = c.multiSite ? 'block' : 'none';
+    document.getElementById('m-regions').checked = !!c.regions;
+    document.getElementById('m-region-names').value = (c.regionNames || []).join(', ');
+    document.getElementById('m-regions-wrap').style.display = c.regions ? 'block' : 'none';
+    document.getElementById('m-notes').value = c.notes || '';
+    gscFilterList = JSON.parse(JSON.stringify(c.gscFilters || []));
+  } else {
+    title.textContent = 'Add new client';
+    del.style.display = 'none';
+    ['m-name'].forEach(function(id){ document.getElementById(id).value = ''; });
+    document.getElementById('m-package').value = 'seo';
+    document.getElementById('m-analytics').value = 'none';
+    ['m-competitors','m-market','m-gbp','m-ai-rankings','m-branded','m-local','m-multi-site','m-regions'].forEach(function(id){ document.getElementById(id).checked = false; });
+    ['m-plausible-site','m-sites','m-region-names','m-notes'].forEach(function(id){ document.getElementById(id).value = ''; });
+    ['m-plausible-wrap','m-sites-wrap','m-regions-wrap'].forEach(function(id){ document.getElementById(id).style.display = 'none'; });
+  }
+  renderGSCFilters();
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+function addGSCFilter() { gscFilterList.push({ label: '', path: '' }); renderGSCFilters(); }
+
+function renderGSCFilters() {
+  var list = document.getElementById('gsc-filters-list');
+  list.innerHTML = gscFilterList.map(function(f, i) {
+    return '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center">' +
+      '<input placeholder="Label (e.g. Commercial clicks)" value="' + esc(f.label) + '" oninput="gscFilterList[' + i + '].label=this.value" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit">' +
+      '<input placeholder="URL path (e.g. /en-us/data-solutions/)" value="' + esc(f.path) + '" oninput="gscFilterList[' + i + '].path=this.value" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:monospace">' +
+      '<button onclick="gscFilterList.splice(' + i + ',1);renderGSCFilters()" style="background:#fef0f0;border:1px solid #fecaca;border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--dn);font-size:12px">\u2715</button>' +
+      '</div>';
+  }).join('');
+}
+
+function saveClient() {
+  var name = document.getElementById('m-name').value.trim();
+  if (!name) { alert('Please enter a client name'); return; }
+  var id = editingClientId || name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+  clients[id] = {
+    name: name,
+    package: document.getElementById('m-package').value,
+    sections: {
+      competitors: document.getElementById('m-competitors').checked,
+      market: document.getElementById('m-market').checked,
+      gbp: document.getElementById('m-gbp').checked,
+      aiRankings: document.getElementById('m-ai-rankings').checked,
+      branded: document.getElementById('m-branded').checked,
+      local: document.getElementById('m-local').checked
+    },
+    analytics: document.getElementById('m-analytics').value,
+    plausibleSite: document.getElementById('m-plausible-site').value.trim(),
+    multiSite: document.getElementById('m-multi-site').checked,
+    sites: document.getElementById('m-sites').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
+    regions: document.getElementById('m-regions').checked,
+    regionNames: document.getElementById('m-region-names').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
+    gscFilters: JSON.parse(JSON.stringify(gscFilterList)),
+    notes: document.getElementById('m-notes').value.trim()
+  };
+  saveClients();
+  closeModal();
+  renderClientGrid();
+}
+
+function deleteClient() {
+  if (!editingClientId) return;
+  var name = clients[editingClientId] ? clients[editingClientId].name : editingClientId;
+  if (!confirm('Delete ' + name + '?')) return;
+  delete clients[editingClientId];
+  if (activeClientId === editingClientId) activeClientId = null;
+  saveClients();
+  closeModal();
+  renderClientGrid();
+}
+
+// ══ NAVIGATION ══
+function showSec(id, btn) {
+  document.querySelectorAll('.sec').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  setTimeout(reveal, 80);
+}
+
+// ══ META ══
+function updateMeta() {
+  var period = document.getElementById('pe-period') ? document.getElementById('pe-period').value : '';
+  var clientName = activeClientId && clients[activeClientId] ? clients[activeClientId].name : 'Select a client';
+  document.getElementById('hdr-client').textContent = clientName + (period ? ' \u2014 ' + period : '');
+  document.getElementById('footer-period').textContent = period || '\u2014';
+}
+
+// ══ REVEAL ══
+function reveal() {
+  document.querySelectorAll('.rev').forEach(function(el) {
+    if (el.getBoundingClientRect().top < window.innerHeight - 40) el.classList.add('vis');
+  });
+}
+window.addEventListener('scroll', reveal);
+setTimeout(reveal, 200);
+
+// ══ UTILS ══
+function fmt(n) {
+  n = parseFloat(n) || 0;
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return Math.round(n).toLocaleString();
+}
+function esc(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ══ CHARTS ══
+function kill(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function buildLineChart(wrapId, id, labels, data, color) {
+  kill(id);
+  document.getElementById(wrapId).innerHTML = '<canvas id="' + id + '"></canvas>';
+  charts[id] = new Chart(document.getElementById(id), {
+    type: 'line',
+    data: { labels: labels, datasets: [{ data: data, borderColor: color, backgroundColor: color + '22', fill: true, tension: .4, pointRadius: 2, pointBackgroundColor: color }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45, maxTicksLimit: 10 } }, y: { grid: { color: 'rgba(0,0,0,.05)' }, ticks: { font: { size: 11 }, callback: function(v){ return fmt(v); } } } } }
+  });
+}
+
+function buildHorizBar(wrapId, id, labels, data) {
+  kill(id);
+  var h = Math.max(180, labels.length * 30 + 60);
+  document.getElementById(wrapId).style.height = h + 'px';
+  document.getElementById(wrapId).innerHTML = '<canvas id="' + id + '"></canvas>';
+  charts[id] = new Chart(document.getElementById(id), {
+    type: 'bar',
+    data: { labels: labels, datasets: [{ data: data, backgroundColor: '#3ecfa3', borderRadius: 3 }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(0,0,0,.05)' }, ticks: { font: { size: 10 }, callback: function(v){ return fmt(v); } } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+  });
+}
+
+function buildBarChart(wrapId, id, labels, data) {
+  kill(id);
+  document.getElementById(wrapId).innerHTML = '<canvas id="' + id + '"></canvas>';
+  charts[id] = new Chart(document.getElementById(id), {
+    type: 'bar',
+    data: { labels: labels, datasets: [{ data: data, backgroundColor: '#3ecfa3', borderRadius: 5 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 12 } } }, y: { grid: { color: 'rgba(0,0,0,.05)' }, ticks: { font: { size: 11 } } } } }
+  });
+}
+
+function buildDoughnut(wrapId, id, labels, data) {
+  if (!data.some(function(v){ return v > 0; })) return;
+  kill(id);
+  document.getElementById(wrapId).innerHTML = '<canvas id="' + id + '"></canvas>';
+  charts[id] = new Chart(document.getElementById(id), {
+    type: 'doughnut',
+    data: { labels: labels, datasets: [{ data: data, backgroundColor: ['#3ecfa3','#1e2d4a','#6b7a94','#b8cce8'], borderWidth: 0, hoverOffset: 5 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 11 }, boxWidth: 11 } } }, cutout: '65%' }
+  });
+}
+
+// ══ INIT ══
+window.addEventListener('DOMContentLoaded', function() {
+  loadClients();
+  var savedId = localStorage.getItem('fibre_oauth_id');
+  if (savedId) {
+    var el = document.getElementById('oauth-client-id');
+    if (el) el.value = savedId;
+  }
+});
+
+</script>
+</body>
+</html>
