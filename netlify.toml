@@ -1,0 +1,8 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/ser/*"
+  to = "/.netlify/functions/ser-proxy/:splat"
+  status = 200
